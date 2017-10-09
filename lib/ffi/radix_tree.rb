@@ -15,7 +15,7 @@ module FFI
     begin
       # bias the library discovery to a path inside the gem first, then
       # to the usual system paths
-      gem_base = ::File.join(::File.dirname(__FILE__), '..', '..', '..')
+      gem_base = ::File.join(::File.dirname(__FILE__), '..', '..')
       inside_gem = ::File.join(gem_base, 'ext')
       local_path = ::FFI::Platform::IS_WINDOWS ? ENV['PATH'].split(';') : ENV['PATH'].split(':')
       env_path = [ ENV['RADIX_TREE_LIB_PATH'] ].compact
@@ -46,7 +46,7 @@ module FFI
            '/usr/local/lib', '/opt/local/lib', homebrew_path, '/usr/lib64'
           ]
         else
-          [::File.join(gem_base, "vendor/radixtree/build/src")]
+          [::File.join(gem_base, "vendor/radixtree")]
         end
 
       RADIX_TREE_LIB_PATHS = radixtree_lib_paths.
@@ -81,49 +81,49 @@ module FFI
     attach_function :longest_prefix_value, [:pointer, :string, :pointer], :pointer
     attach_function :match_free, [:pointer], :void
     attach_function :has_key, [:pointer, :string], :bool
-  end
 
-  class Tree
-    DESTROY_METHOD = ::RadixTree.method(:destroy)
-    FREE_METHOD = ::RadixTree.method(:match_free)
+    class Tree
+      DESTROY_METHOD = ::FFI::RadixTree.method(:destroy)
+      FREE_METHOD = ::FFI::RadixTree.method(:match_free)
 
-    def initialize
-      @ptr = ::FFI::AutoPointer.new(::FFI::RadixTree.create, DESTROY_METHOD)
-    end
+      def initialize
+        @ptr = ::FFI::AutoPointer.new(::FFI::RadixTree.create, DESTROY_METHOD)
+      end
 
-    def has_key?(key)
-      ::FFI::RadixTree.has_key(@ptr, key)
-    end
+      def has_key?(key)
+        ::FFI::RadixTree.has_key(@ptr, key)
+      end
 
-    def push(key, value)
-      storage_data = ::MessagePack.pack(value)
-      bytesize = storage_data.bytesize
-      memory_buffer = ::FFI::MemoryPointer.new(:char, bytesize, true)
-      memory_buffer.put_bytes(0, storage_data)
-      ::FFI::RadixTree.insert(@ptr, key, memory_buffer, bytesize)
-    end
+      def push(key, value)
+        storage_data = ::MessagePack.pack(value)
+        bytesize = storage_data.bytesize
+        memory_buffer = ::FFI::MemoryPointer.new(:char, bytesize, true)
+        memory_buffer.put_bytes(0, storage_data)
+        ::FFI::RadixTree.insert(@ptr, key, memory_buffer, bytesize)
+      end
 
-    def get(key)
-      byte_length = ::FFI::MemoryPointer.new(:int)
-      byte_pointer = ::FFI::AutoPointer.new(::FFI::RadixTree.fetch(@ptr, key, byte_length), FREE_METHOD)
-      bytesize = byte_length.read_int
-      return nil if bytesize <= 0
-      ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize))
-    end
+      def get(key)
+        byte_length = ::FFI::MemoryPointer.new(:int)
+        byte_pointer = ::FFI::AutoPointer.new(::FFI::RadixTree.fetch(@ptr, key, byte_length), FREE_METHOD)
+        bytesize = byte_length.read_int
+        return nil if bytesize <= 0
+        ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize))
+      end
 
-    def longest_prefix(string)
-      value, p_out = ::FFI::RadixTree.longest_prefix(@ptr, string)
-      p_out = ::FFI::AutoPointer.new(p_out, FREE_METHOD) unless p_out.nil?
-      value.force_encoding("UTF-8") unless value.nil?
-      value
-    end
+      def longest_prefix(string)
+        value, p_out = ::FFI::RadixTree.longest_prefix(@ptr, string)
+        p_out = ::FFI::AutoPointer.new(p_out, FREE_METHOD) unless p_out.nil?
+        value.force_encoding("UTF-8") unless value.nil?
+        value
+      end
 
-    def longest_prefix_value(string)
-      byte_length = ::FFI::MemoryPointer.new(:int)
-      byte_pointer = ::FFI::AutoPointer.new(::FFI::RadixTree.longest_prefix_value(@ptr, string, byte_length), FREE_METHOD)
-      bytesize = byte_length.read_int
-      return nil if bytesize <= 0
-      ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize))
+      def longest_prefix_value(string)
+        byte_length = ::FFI::MemoryPointer.new(:int)
+        byte_pointer = ::FFI::AutoPointer.new(::FFI::RadixTree.longest_prefix_value(@ptr, string, byte_length), FREE_METHOD)
+        bytesize = byte_length.read_int
+        return nil if bytesize <= 0
+        ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize))
+      end
     end
   end
 end
