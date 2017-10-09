@@ -1,5 +1,6 @@
 *.ruby-*
 *.so
+*.o
 CMakeCache.txt
 /vendor/radixtree/CMakeFiles
 /vendor/radixtree/CMakeFiles/**/*
