@@ -1,5 +1,10 @@
 *.ruby-*
 *.so
+CMakeCache.txt
+/vendor/radixtree/CMakeFiles
+/vendor/radixtree/CMakeFiles/**/*
+/vendor/radixtree/Makefile
+cmake_install.cmake
 /.bundle/
 /.yardoc
 /Gemfile.lock

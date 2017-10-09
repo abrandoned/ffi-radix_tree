@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "radix_tree/radix_tree.hpp"
+#include "radix_tree.hpp"
 
 #ifdef __cplusplus
 #define EXTERN_C       extern "C"
