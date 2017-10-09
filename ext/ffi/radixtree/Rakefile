@@ -1,0 +1,62 @@
+require "rubygems"
+require "fileutils"
+require "ffi"
+
+# Copied fom mkmf
+def find_executable(bin, path = nil)
+  executable_file = proc do |name|
+    begin
+      stat = File.stat(name)
+    rescue SystemCallError
+    else
+      next name if stat.file? and stat.executable?
+    end
+  end
+
+  if File.expand_path(bin) == bin
+    return bin if executable_file.call(bin)
+    return nil
+  end
+  if path ||= ENV['PATH']
+    path = path.split(File::PATH_SEPARATOR)
+  else
+    path = %w[/usr/local/bin /usr/ucb /usr/bin /bin]
+  end
+  file = nil
+  path.each do |dir|
+    return file if executable_file.call(file = File.join(dir, bin))
+  end
+  nil
+end
+
+def sys(cmd)
+  puts " -- #{cmd}"
+  unless ret = system(cmd)
+    raise "ERROR: '#{cmd}' failed"
+  end
+  ret
+end
+
+desc "Build the radixtree shared lib"
+task :compile_radixtree do
+  # Do not attempt to install if we want to use the system radixtree lib
+  next if ENV.key?("RADIX_TREE_USE_SYSTEM_LIB")
+
+  if !find_executable("cmake")
+    abort "ERROR: CMake is required to build ffi-radix_tree"
+  end
+
+  CWD = ::File.expand_path(::File.dirname(__FILE__))
+  RADIXTREE_DIR = ::File.join(CWD, "..", "..", "..", "vendor", "radixtree")
+
+  ::Dir.chdir(RADIXTREE_DIR) do
+    sys("cmake CMakeLists.txt")
+    sys("make")
+  end
+
+  unless ::File.exist?(::File.join(RADIXTREE_DIR, "libradixtree.#{::FFI::Platform::LIBSUFFIX}"))
+    abort "ERROR: Failed to build radixtree"
+  end
+end
+
+task :default => :compile_radixtree
