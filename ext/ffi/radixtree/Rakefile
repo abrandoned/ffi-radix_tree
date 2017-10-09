@@ -41,15 +41,15 @@ task :compile_radixtree do
   # Do not attempt to install if we want to use the system radixtree lib
   next if ENV.key?("RADIX_TREE_USE_SYSTEM_LIB")
 
-  if !find_executable("gcc")
-    abort "ERROR: CMake is required to build ffi-radix_tree"
+  if !find_executable("g++")
+    abort "ERROR: g++ is required to build ffi-radix_tree"
   end
 
   CWD = ::File.expand_path(::File.dirname(__FILE__))
   RADIXTREE_DIR = ::File.join(CWD, "..", "..", "..", "vendor", "radixtree")
 
   ::Dir.chdir(RADIXTREE_DIR) do
-    sys("g++ -c -Wall -Wextra -O3 -fPIC ./ffi_radix_tree.cpp")
+    sys("g++ -c -Wall -Wextra -O3 -std=c++11 -fPIC ./ffi_radix_tree.cpp")
     sys("g++ -shared -o libradixtree.#{::FFI::Platform::LIBSUFFIX} ffi_radix_tree.o")
   end
 
