@@ -88,6 +88,7 @@ module FFI
 
       def initialize
         @ptr = ::FFI::AutoPointer.new(::FFI::RadixTree.create, DESTROY_METHOD)
+        @first_character_present = {}
       end
 
       def has_key?(key)
@@ -95,6 +96,7 @@ module FFI
       end
 
       def push(key, value)
+        @first_character_present[key[0]] = true
         storage_data = ::MessagePack.pack(value)
         bytesize = storage_data.bytesize
         memory_buffer = ::FFI::MemoryPointer.new(:char, bytesize, true)
@@ -103,6 +105,7 @@ module FFI
       end
 
       def get(key)
+        return nil unless @first_character_present[key[0]]
         byte_length = ::FFI::MemoryPointer.new(:int)
         byte_pointer = ::FFI::AutoPointer.new(::FFI::RadixTree.fetch(@ptr, key, byte_length), FREE_METHOD)
         bytesize = byte_length.read_int
@@ -111,6 +114,7 @@ module FFI
       end
 
       def longest_prefix(string)
+        return nil unless @first_character_present[string[0]]
         value, p_out = ::FFI::RadixTree.longest_prefix(@ptr, string)
         p_out = ::FFI::AutoPointer.new(p_out, FREE_METHOD) unless p_out.nil?
         value.force_encoding("UTF-8") unless value.nil?
@@ -118,6 +122,7 @@ module FFI
       end
 
       def longest_prefix_value(string)
+        return nil unless @first_character_present[string[0]]
         byte_length = ::FFI::MemoryPointer.new(:int)
         byte_pointer = ::FFI::AutoPointer.new(::FFI::RadixTree.longest_prefix_value(@ptr, string, byte_length), FREE_METHOD)
         bytesize = byte_length.read_int
