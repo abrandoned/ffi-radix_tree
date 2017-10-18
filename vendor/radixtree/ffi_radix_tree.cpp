@@ -34,6 +34,7 @@ bool has_key(radix_tree<std::string, std::vector<char>>* map_pointer, const char
 void match_free(const char* match) {
   if (match != NULL) {
     delete[] match;
+    match = NULL;
   }
 }
 
@@ -97,5 +98,6 @@ void insert(radix_tree<std::string, std::vector<char>>* map_pointer, const char*
 
 void destroy(radix_tree<std::string, std::vector<char>>* map_pointer) {
   delete map_pointer;
+  map_pointer = NULL;
 }
 EXTERN_C_END

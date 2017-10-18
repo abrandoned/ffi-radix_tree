@@ -86,9 +86,18 @@ module FFI
       DESTROY_METHOD = ::FFI::RadixTree.method(:destroy)
       FREE_METHOD = ::FFI::RadixTree.method(:match_free)
 
+      def self.destroy!(tree)
+        tree.destroy! unless tree.nil?
+      end
+
       def initialize
         @ptr = ::FFI::AutoPointer.new(::FFI::RadixTree.create, DESTROY_METHOD)
         @first_character_present = {}
+      end
+
+      def destroy!
+        ::FFI::RadixTree.destroy(@ptr) unless @ptr.nil?
+        @ptr = nil
       end
 
       def has_key?(key)
@@ -111,6 +120,8 @@ module FFI
         bytesize = byte_length.read_int
         return nil if bytesize <= 0
         ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize))
+      ensure
+        ::FFI::RadixTree.match_free(byte_pointer) unless byte_pointer.nil?
       end
 
       def longest_prefix(string)
@@ -119,6 +130,8 @@ module FFI
         p_out = ::FFI::AutoPointer.new(p_out, FREE_METHOD) unless p_out.nil?
         value.force_encoding("UTF-8") unless value.nil?
         value
+      ensure
+        ::FFI::RadixTree.match_free(p_out) unless p_out.nil?
       end
 
       def longest_prefix_value(string)
@@ -128,6 +141,8 @@ module FFI
         bytesize = byte_length.read_int
         return nil if bytesize <= 0
         ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize))
+      ensure
+        ::FFI::RadixTree.match_free(byte_pointer) unless byte_pointer.nil?
       end
     end
   end
