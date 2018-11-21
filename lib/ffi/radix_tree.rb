@@ -74,7 +74,7 @@ module FFI
 
     attach_function :create, [], :pointer
     attach_function :destroy, [:pointer], :void
-    attach_function :erase, [:string], :void
+    attach_function :erase, [:pointer, :string], :void
     attach_function :fetch, [:pointer, :string, :pointer], :pointer
     attach_function :insert, [:pointer, :string, :pointer, :size_t], :void
     attach_function :longest_prefix, [:pointer, :string], :string
@@ -102,43 +102,56 @@ module FFI
       end
 
       def push(key, value)
+        push_response = nil
         @first_character_present[key[0]] = true
         storage_data = ::MessagePack.pack(value)
         bytesize = storage_data.bytesize
-        memory_buffer = ::FFI::MemoryPointer.new(:char, bytesize, true)
-        memory_buffer.put_bytes(0, storage_data)
-        ::FFI::RadixTree.insert(@ptr, key, memory_buffer, bytesize)
+
+        ::FFI::MemoryPointer.new(:char, bytesize, true) do |memory_buffer|
+          memory_buffer.put_bytes(0, storage_data)
+          push_response = ::FFI::RadixTree.insert(@ptr, key, memory_buffer, bytesize)
+        end
+
+        push_response
       end
 
       def get(key)
         return nil unless @first_character_present[key[0]]
-        byte_length = ::FFI::MemoryPointer.new(:int)
-        byte_pointer = ::FFI::RadixTree.fetch(@ptr, key, byte_length)
-        bytesize = byte_length.read_int
-        return nil if bytesize <= 0
-        ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize))
+        byte_pointer = get_response = nil
+
+        ::FFI::MemoryPointer.new(:int) do |byte_length|
+          byte_pointer = ::FFI::RadixTree.fetch(@ptr, key, byte_length)
+          bytesize = byte_length.read_int
+          get_response = ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize)) if bytesize && bytesize > 0
+        end
+
+        get_response
       ensure
-        ::FFI::RadixTree.match_free(byte_pointer) unless byte_pointer.nil?
+        ::FFI::RadixTree.match_free(byte_pointer) if byte_pointer
       end
 
       def longest_prefix(string)
         return nil unless @first_character_present[string[0]]
         value, p_out = ::FFI::RadixTree.longest_prefix(@ptr, string)
-        value.force_encoding("UTF-8") unless value.nil?
+        value.force_encoding("UTF-8") if value
         value
       ensure
-        ::FFI::RadixTree.match_free(p_out) unless p_out.nil?
+        ::FFI::RadixTree.match_free(p_out) if p_out
       end
 
       def longest_prefix_value(string)
         return nil unless @first_character_present[string[0]]
-        byte_length = ::FFI::MemoryPointer.new(:int)
-        byte_pointer = ::FFI::RadixTree.longest_prefix_value(@ptr, string, byte_length)
-        bytesize = byte_length.read_int
-        return nil if bytesize <= 0
-        ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize))
+        byte_pointer = get_response = nil
+
+        ::FFI::MemoryPointer.new(:int) do |byte_length|
+          byte_pointer = ::FFI::RadixTree.longest_prefix_value(@ptr, string, byte_length)
+          bytesize = byte_length.read_int
+          ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize)) if bytesize && bytesize > 0
+        end
+
+        get_response
       ensure
-        ::FFI::RadixTree.match_free(byte_pointer) unless byte_pointer.nil?
+        ::FFI::RadixTree.match_free(byte_pointer) if byte_pointer
       end
     end
   end
