@@ -146,7 +146,7 @@ module FFI
         ::FFI::MemoryPointer.new(:int) do |byte_length|
           byte_pointer = ::FFI::RadixTree.longest_prefix_value(@ptr, string, byte_length)
           bytesize = byte_length.read_int
-          ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize)) if bytesize && bytesize > 0
+          get_response = ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize)) if bytesize && bytesize > 0
         end
 
         get_response

@@ -9,11 +9,12 @@ namespace :radixtree do
   end
 end
 
-Rake::TestTask.new(:test) do |t|
-  t.libs << "test"
+Rake::TestTask.new(:spec) do |t|
+  t.libs << "spec"
   t.libs << "lib"
-  t.test_files = FileList["test/**/*_test.rb"]
+  t.pattern = "spec/**/*_spec.rb"
+  t.verbose = true
 end
-Rake::Task[:test].prerequisites << "radixtree:compile"
+Rake::Task[:spec].prerequisites << "radixtree:compile"
 
-task :default => :test
+task :default => :spec
