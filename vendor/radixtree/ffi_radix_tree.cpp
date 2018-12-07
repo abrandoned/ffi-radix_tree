@@ -53,6 +53,37 @@ const char* longest_prefix(radix_tree<std::string, std::vector<char>>* map_point
   return NULL;
 }
 
+const char* longest_prefix_and_value(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, int* read_size) {
+  std::string string_key(key);
+  auto iter = map_pointer->longest_match(string_key);
+  long counter = 0;
+
+  if (iter != map_pointer->end()) {
+    int size_of_response = iter->second.size() + iter->first.size() + 9;
+    char *return_val  = new char[size_of_response]{0};
+    for( auto& val : iter->first) {
+      return_val[counter] = val;
+      counter++;
+    }
+
+    for( auto& val2 : { '[', ':', 'r', 'a', 'd', 'i', 'x', ':', ']' }) {
+      return_val[counter] = val2;
+      counter++;
+    }
+
+    for( auto& val3 : iter->second) {
+      return_val[counter] = val3;
+      counter++;
+    }
+
+    *read_size = size_of_response;
+    return return_val;
+  }
+
+  *read_size = 0;
+  return NULL;
+}
+
 const char* longest_prefix_value(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, int* read_size) {
   std::string string_key(key);
   auto iter = map_pointer->longest_match(string_key);
@@ -73,12 +104,12 @@ const char* longest_prefix_value(radix_tree<std::string, std::vector<char>>* map
   return NULL;
 }
 
-const char* fetch(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, int* read_size) {
+unsigned char* fetch(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, int* read_size) {
   auto iter = map_pointer->find(std::string(key));
   long counter = 0;
 
   if (iter != map_pointer->end()) {
-    char *return_val  = new char[iter->second.size()]{0};
+    unsigned char *return_val  = new unsigned char[iter->second.size()]{0};
     for( auto& val : iter->second ) {
       return_val[counter] = val;
       counter++;
