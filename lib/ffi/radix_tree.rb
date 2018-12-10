@@ -78,14 +78,12 @@ module FFI
     attach_function :fetch, [:pointer, :string, :pointer], :pointer
     attach_function :insert, [:pointer, :string, :pointer, :size_t], :void
     attach_function :longest_prefix, [:pointer, :string], :string
-    attach_function :longest_prefix_and_value, [:pointer, :string, :pointer], :pointer
+    attach_function :longest_prefix_and_value, [:pointer, :string, :pointer, :pointer], :pointer
     attach_function :longest_prefix_value, [:pointer, :string, :pointer], :pointer
     attach_function :match_free, [:pointer], :void
     attach_function :has_key, [:pointer, :string], :bool
 
     class Tree
-      RADIX_SPLIT = "[:radix:]".freeze
-
       def self.destroy!(tree)
         tree.destroy! unless tree.nil?
       end
@@ -151,14 +149,16 @@ module FFI
         byte_pointer = prefix_response = get_response = nil
 
         ::FFI::MemoryPointer.new(:int) do |byte_length|
-          byte_pointer = ::FFI::RadixTree.longest_prefix_and_value(@ptr, string, byte_length)
-          bytesize = byte_length.read_int
+          ::FFI::MemoryPointer.new(:int) do |prefix_length|
+            byte_pointer = ::FFI::RadixTree.longest_prefix_and_value(@ptr, string, byte_length, prefix_length)
+            bytesize = byte_length.read_int
 
-          if bytesize && bytesize > 0
-            get_response = byte_pointer.get_bytes(0, bytesize)
-            splits = get_response.split(RADIX_SPLIT)
-            prefix_response = splits.delete_at(0)
-            get_response = ::MessagePack.unpack(splits.join(RADIX_SPLIT))
+            if bytesize && bytesize > 0
+              prefix_size = prefix_length.read_int
+              get_response = byte_pointer.get_bytes(0, bytesize)
+              prefix_response = get_response[0..(prefix_size - 1)]
+              get_response = ::MessagePack.unpack(get_response[prefix_size..-1])
+            end
           end
         end
 

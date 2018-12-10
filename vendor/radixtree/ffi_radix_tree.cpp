@@ -44,7 +44,6 @@ const char* longest_prefix(radix_tree<std::string, std::vector<char>>* map_point
 
   if (iter != map_pointer->end()) {
     char *val  = new char[iter->first.size() + 1]{0};
-    val[iter->first.size()] = '\0';
     memcpy(val, iter->first.c_str(), iter->first.size());
 
     return val;
@@ -53,33 +52,29 @@ const char* longest_prefix(radix_tree<std::string, std::vector<char>>* map_point
   return NULL;
 }
 
-const char* longest_prefix_and_value(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, int* read_size) {
+const char* longest_prefix_and_value(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, int* read_size, int* prefix_size) {
   std::string string_key(key);
   auto iter = map_pointer->longest_match(string_key);
-  long counter = 0;
 
   if (iter != map_pointer->end()) {
-    int size_of_response = iter->second.size() + iter->first.size() + 9;
+    long counter = 0;
+    int size_of_response = iter->second.size() + iter->first.size();
     char *return_val  = new char[size_of_response]{0};
-    for( auto& val : iter->first) {
-      return_val[counter] = val;
-      counter++;
-    }
 
-    for( auto& val2 : { '[', ':', 'r', 'a', 'd', 'i', 'x', ':', ']' }) {
-      return_val[counter] = val2;
-      counter++;
-    }
+    strncpy(return_val, iter->first.c_str(), iter->first.size());
+    counter = iter->first.size();
 
     for( auto& val3 : iter->second) {
       return_val[counter] = val3;
       counter++;
     }
 
+    *prefix_size = iter->first.size();
     *read_size = size_of_response;
     return return_val;
   }
 
+  *prefix_size = 0;
   *read_size = 0;
   return NULL;
 }
