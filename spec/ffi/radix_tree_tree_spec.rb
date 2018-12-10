@@ -35,6 +35,15 @@ describe ::FFI::RadixTree::Tree do
       subject.longest_prefix("longest_prefix_").must_equal "longest_prefix_"
     end
 
+    it "#longest_prefix_and_value" do
+      subject.must_respond_to("longest_prefix_and_value")
+      subject.method(:longest_prefix_and_value).arity.must_equal 1
+      subject.longest_prefix_and_value("nothing").must_equal [nil, nil]
+      subject.push("longest_prefix_value", "test")
+      subject.push("longest_prefix_value_", "test2")
+      subject.longest_prefix_and_value("longest_prefix_value_").must_equal ["longest_prefix_value_", "test2"]
+    end
+
     it "#longest_prefix_value" do
       subject.must_respond_to("longest_prefix_value")
       subject.method(:longest_prefix_value).arity.must_equal 1

@@ -78,6 +78,7 @@ module FFI
     attach_function :fetch, [:pointer, :string, :pointer], :pointer
     attach_function :insert, [:pointer, :string, :pointer, :size_t], :void
     attach_function :longest_prefix, [:pointer, :string], :string
+    attach_function :longest_prefix_and_value, [:pointer, :string, :pointer, :pointer], :pointer
     attach_function :longest_prefix_value, [:pointer, :string, :pointer], :pointer
     attach_function :match_free, [:pointer], :void
     attach_function :has_key, [:pointer, :string], :bool
@@ -122,7 +123,11 @@ module FFI
         ::FFI::MemoryPointer.new(:int) do |byte_length|
           byte_pointer = ::FFI::RadixTree.fetch(@ptr, key, byte_length)
           bytesize = byte_length.read_int
-          get_response = ::MessagePack.unpack(byte_pointer.get_bytes(0, bytesize)) if bytesize && bytesize > 0
+
+          if bytesize && bytesize > 0
+            bytes = byte_pointer.get_bytes(0, bytesize)
+            get_response = ::MessagePack.unpack(bytes)
+          end
         end
 
         get_response
@@ -137,6 +142,29 @@ module FFI
         value
       ensure
         ::FFI::RadixTree.match_free(p_out) if p_out
+      end
+
+      def longest_prefix_and_value(string)
+        return [nil, nil] unless @first_character_present[string[0]]
+        byte_pointer = prefix_response = get_response = nil
+
+        ::FFI::MemoryPointer.new(:int) do |byte_length|
+          ::FFI::MemoryPointer.new(:int) do |prefix_length|
+            byte_pointer = ::FFI::RadixTree.longest_prefix_and_value(@ptr, string, byte_length, prefix_length)
+            bytesize = byte_length.read_int
+
+            if bytesize && bytesize > 0
+              prefix_size = prefix_length.read_int
+              get_response = byte_pointer.get_bytes(0, bytesize)
+              prefix_response = get_response[0..(prefix_size - 1)]
+              get_response = ::MessagePack.unpack(get_response[prefix_size..-1])
+            end
+          end
+        end
+
+        [prefix_response, get_response]
+      ensure
+        ::FFI::RadixTree.match_free(byte_pointer) if byte_pointer
       end
 
       def longest_prefix_value(string)
