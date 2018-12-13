@@ -50,6 +50,22 @@ namespace :radixtree do
       x.report("prefix and value (combined/miss)") do
         radix_tree.longest_prefix_and_value("DERP DERPIE")
       end
+
+      x.report("greedy match") do
+        radix_tree.greedy_match(rand(1000).to_s * [1, 100, 100].sample)
+      end
+
+      x.report("greedy match (miss)") do
+        radix_tree.greedy_match("DERP DERPIE")
+      end
+
+      x.report("greedy substring match") do
+        radix_tree.greedy_substring_match(rand(1000).to_s * [1, 100, 100].sample)
+      end
+
+      x.report("greedy substring match (miss)") do
+        radix_tree.greedy_substring_match("DERP DERPIE")
+      end
     end
   end
 end

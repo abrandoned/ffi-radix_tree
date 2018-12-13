@@ -80,7 +80,10 @@ module FFI
     attach_function :longest_prefix, [:pointer, :string], :string
     attach_function :longest_prefix_and_value, [:pointer, :string, :pointer, :pointer], :pointer
     attach_function :longest_prefix_value, [:pointer, :string, :pointer], :pointer
+    attach_function :greedy_match, [:pointer, :string, :pointer], :int
+    attach_function :greedy_substring_match, [:pointer, :string, :pointer], :int
     attach_function :match_free, [:pointer], :void
+    attach_function :multi_match_free, [:pointer, :int], :void
     attach_function :has_key, [:pointer, :string], :bool
 
     class Tree
@@ -180,6 +183,45 @@ module FFI
         get_response
       ensure
         ::FFI::RadixTree.match_free(byte_pointer) if byte_pointer
+      end
+
+      def greedy_match(string)
+        return [] unless @first_character_present[string[0]]
+        array_pointer = nil
+        array_size = 0
+        get_response = []
+
+        ::FFI::MemoryPointer.new(:pointer) do |match_array|
+          array_size = ::FFI::RadixTree.greedy_match(@ptr, string, match_array)
+          if array_size > 0
+            array_pointer = match_array.read_pointer
+            get_response = array_pointer.get_array_of_string(0, array_size)
+            get_response.map! { |packed| ::MessagePack.unpack(packed) }
+          end
+        end
+
+        get_response
+      ensure
+        ::FFI::RadixTree.multi_match_free(array_pointer, array_size) if array_pointer
+      end
+
+      def greedy_substring_match(string)
+        array_pointer = nil
+        array_size = 0
+        get_response = []
+
+        ::FFI::MemoryPointer.new(:pointer) do |match_array|
+          array_size = ::FFI::RadixTree.greedy_substring_match(@ptr, string, match_array)
+          if array_size > 0
+            array_pointer = match_array.read_pointer
+            get_response = array_pointer.get_array_of_string(0, array_size)
+            get_response.map! { |packed| ::MessagePack.unpack(packed) }
+          end
+        end
+
+        get_response
+      ensure
+        ::FFI::RadixTree.multi_match_free(array_pointer, array_size) if array_pointer
       end
     end
   end

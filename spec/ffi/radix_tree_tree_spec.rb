@@ -52,5 +52,27 @@ describe ::FFI::RadixTree::Tree do
       subject.push("longest_prefix_value_", "test2")
       subject.longest_prefix_value("longest_prefix_value_").must_equal "test2"
     end
+
+    it "#greedy_match" do
+      subject.must_respond_to("greedy_match")
+      subject.method(:greedy_match).arity.must_equal 1
+      subject.greedy_match("nothing").must_equal []
+      subject.push("greedy_match", "test")
+      subject.push("greedy_match_", "test2")
+      subject.push("no_match", "test3")
+      subject.greedy_match("greedy_match").must_equal ["test", "test2"]
+    end
+
+    it "#greedy_substring_match" do
+      subject.must_respond_to("greedy_substring_match")
+      subject.method(:greedy_substring_match).arity.must_equal 1
+      subject.greedy_substring_match("nothing").must_equal []
+      subject.push("substring", "test")
+      subject.push("substring_match", "test2")
+      subject.push("substring_no_match", "no_match")
+      subject.push("no_match", "no_match")
+      subject.push("no_match2", "no_match")
+      subject.greedy_substring_match("abc greedy_substring_match xyz").must_equal ["test", "test2"]
+    end
   end
 end

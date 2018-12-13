@@ -38,6 +38,17 @@ void match_free(const char* match) {
   }
 }
 
+void multi_match_free(const char** match, int length) {
+  if (match != NULL) {
+    for (int i=0; i<length; ++i) {
+      delete[] match[i];
+      match[i] = NULL;
+    }
+    delete[] match;
+    match = NULL;
+  }
+}
+
 const char* longest_prefix(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key) {
   std::string string_key(key);
   auto iter = map_pointer->longest_match(string_key);
@@ -116,6 +127,56 @@ unsigned char* fetch(radix_tree<std::string, std::vector<char>>* map_pointer, co
 
   *read_size = 0;
   return NULL;
+}
+
+int greedy_match(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, const char*** matches) {
+  std::string string_key(key);
+  typedef radix_tree<std::string, std::vector<char>>::iterator iterator;
+  std::vector<iterator> vec;
+  map_pointer->greedy_match(string_key, vec);
+  long counter = 0;
+
+  if (vec.size() > 0) {
+    *matches = new const char*[vec.size()]{nullptr};
+    for (auto& iter : vec) {
+      auto ret_str = new char[iter->second.size() + 1];
+      long char_index = 0;
+      for (auto& val : iter->second) {
+        ret_str[char_index] = val;
+        ++char_index;
+      }
+      ret_str[char_index] = '\0';
+      (*matches)[counter] = ret_str;
+      ++counter;
+    }
+    return counter;
+  }
+  return 0;
+}
+
+int greedy_substring_match(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, const char*** matches) {
+  std::string string_key(key);
+  typedef radix_tree<std::string, std::vector<char>>::iterator iterator;
+  std::vector<iterator> vec;
+  map_pointer->greedy_substring_match(string_key, vec);
+  long counter = 0;
+
+  if (vec.size() > 0) {
+    *matches = new const char*[vec.size()]{nullptr};
+    for (auto& iter : vec) {
+      auto ret_str = new char[iter->second.size() + 1];
+      long char_index = 0;
+      for (auto& val : iter->second) {
+        ret_str[char_index] = val;
+        ++char_index;
+      }
+      ret_str[char_index] = '\0';
+      (*matches)[counter] = ret_str;
+      ++counter;
+    }
+    return counter;
+  }
+  return 0;
 }
 
 void insert(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, char* value, size_t size) {

@@ -30,6 +30,14 @@ describe ::FFI::RadixTree do
       ::FFI::RadixTree.must_respond_to("longest_prefix_value")
     end
 
+    it "responds to #greedy_match" do
+      ::FFI::RadixTree.must_respond_to("greedy_match")
+    end
+
+    it "responds to #greedy_substring_match" do
+      ::FFI::RadixTree.must_respond_to("greedy_substring_match")
+    end
+
     it "responds to #match_free" do
       ::FFI::RadixTree.must_respond_to("match_free")
     end
