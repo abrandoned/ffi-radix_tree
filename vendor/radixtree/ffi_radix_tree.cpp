@@ -149,9 +149,8 @@ int greedy_match(radix_tree<std::string, std::vector<char>>* map_pointer, const 
       (*matches)[counter] = ret_str;
       ++counter;
     }
-    return counter;
   }
-  return 0;
+  return counter;
 }
 
 int greedy_substring_match(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, const char*** matches) {
@@ -174,9 +173,8 @@ int greedy_substring_match(radix_tree<std::string, std::vector<char>>* map_point
       (*matches)[counter] = ret_str;
       ++counter;
     }
-    return counter;
   }
-  return 0;
+  return counter;
 }
 
 void insert(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, char* value, size_t size) {
