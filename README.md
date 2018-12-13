@@ -22,7 +22,44 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+# create a new tree
+rtree = ::FFI::RadixTree::Tree.new
+
+# add key/value pairs to the tree
+rtree.push("key1", "value1")
+rtree.push("key2", ["value2", "value3"])
+rtree.push("key3", { :attr1 => "value4", :attr2 => "value5" })
+
+# work with the collection
+if rtree.has_key?("key1")
+  val = rtree.get("key2")
+  rtree.set("key3", "value6")
+end
+
+# search the tree using the keys
+
+# keys based off the root word: "manage"
+rtree.push("manage", "base verb")
+rtree.push("managed", "past tense")
+rtree.push("manager", "noun")
+rtree.push("managers", "plural noun")
+rtree.push("managing", "present tense")
+
+# Find the key that matches the _most_ of the beggining of the search term
+rtree.longest_prefix("managerial")                # returns "manager"
+rtree.longest_prefix_and_value("managerial")      # returns ["manager", "noun"]
+rtree.longest_prefix_value("managerial")          # returns "noun"
+
+# Find all values whose keys match the _most_ of the beginning of the search term
+rtree.greedy_match("managerial")                  # returns ["noun", "plural noun"]
+
+# Find all values whose keys are included _anywhere_ in the search term
+rtree.greedy_substring_match("I managed to jump") # returns ["base verb", "past tense"]
+
+# cleanup
+rtree.destroy!
+```
 
 ## Development
 
