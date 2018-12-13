@@ -129,7 +129,7 @@ unsigned char* fetch(radix_tree<std::string, std::vector<char>>* map_pointer, co
   return NULL;
 }
 
-int greedy_match(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, const char*** matches) {
+int greedy_match(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, const char*** matches, int** match_sizes) {
   std::string string_key(key);
   typedef radix_tree<std::string, std::vector<char>>::iterator iterator;
   std::vector<iterator> vec;
@@ -137,23 +137,24 @@ int greedy_match(radix_tree<std::string, std::vector<char>>* map_pointer, const 
   long counter = 0;
 
   if (vec.size() > 0) {
-    *matches = new const char*[vec.size()]{nullptr};
+    *matches = new const char* [vec.size()]{nullptr};
+    *match_sizes = new int [vec.size()]{0};
     for (auto& iter : vec) {
-      auto ret_str = new char[iter->second.size() + 1];
+      auto ret_str = new char[iter->second.size()];
       long char_index = 0;
       for (auto& val : iter->second) {
         ret_str[char_index] = val;
         ++char_index;
       }
-      ret_str[char_index] = '\0';
       (*matches)[counter] = ret_str;
+      (*match_sizes)[counter] = iter->second.size();
       ++counter;
     }
   }
   return counter;
 }
 
-int greedy_substring_match(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, const char*** matches) {
+int greedy_substring_match(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, const char*** matches, int** match_sizes) {
   std::string string_key(key);
   typedef radix_tree<std::string, std::vector<char>>::iterator iterator;
   std::vector<iterator> vec;
@@ -161,16 +162,17 @@ int greedy_substring_match(radix_tree<std::string, std::vector<char>>* map_point
   long counter = 0;
 
   if (vec.size() > 0) {
-    *matches = new const char*[vec.size()]{nullptr};
+    *matches = new const char* [vec.size()]{nullptr};
+    *match_sizes = new int [vec.size()]{0};
     for (auto& iter : vec) {
-      auto ret_str = new char[iter->second.size() + 1];
+      auto ret_str = new char[iter->second.size()];
       long char_index = 0;
       for (auto& val : iter->second) {
         ret_str[char_index] = val;
         ++char_index;
       }
-      ret_str[char_index] = '\0';
       (*matches)[counter] = ret_str;
+      (*match_sizes)[counter] = iter->second.size();
       ++counter;
     }
   }
