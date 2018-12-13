@@ -26,6 +26,15 @@ describe ::FFI::RadixTree::Tree do
       subject.get("get").must_equal "test"
     end
 
+    it "#set" do
+      subject.must_respond_to("set")
+      subject.method(:set).arity.must_equal 2
+      subject.push("hello", "world")
+      subject.set("hello", "updated")
+      subject.get("hello").must_equal "updated"
+      subject.set("no_match", "fail").must_equal false
+    end
+
     it "#longest_prefix" do
       subject.must_respond_to("longest_prefix")
       subject.method(:longest_prefix).arity.must_equal 1

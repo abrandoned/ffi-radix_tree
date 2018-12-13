@@ -183,6 +183,10 @@ void insert(radix_tree<std::string, std::vector<char>>* map_pointer, const char*
   map_pointer->insert({std::string(key), std::vector<char>(value, value + size)});
 }
 
+bool update(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, char* value, size_t size) {
+  return map_pointer->update({std::string(key), std::vector<char>(value, value + size)});
+}
+
 void destroy(radix_tree<std::string, std::vector<char>>* map_pointer) {
   delete map_pointer;
   map_pointer = NULL;

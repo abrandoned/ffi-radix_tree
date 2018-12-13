@@ -67,6 +67,7 @@ public:
     iterator end();
 
     std::pair<iterator, bool> insert(const value_type &val);
+    bool update(const value_type &val);
     bool erase(const K &key);
     void erase(iterator it);
     void prefix_match(const K &key, std::vector<iterator> &vec);
@@ -466,6 +467,22 @@ std::pair<typename radix_tree<K, T>::iterator, bool> radix_tree<K, T>::insert(co
             return std::pair<iterator, bool>(prepend(node, val), true);
         }
     }
+}
+
+template <typename K, typename T>
+bool radix_tree<K, T>::update(const value_type &val)
+{
+    if (m_root == NULL)
+        return false;
+
+    radix_tree_node<K, T> *node = find_node(val.first, m_root, 0);
+
+    // if the node is a internal node, return false
+    if (! node->m_is_leaf)
+        return false;
+
+    node->m_value = new value_type(val);
+    return true;
 }
 
 template <typename K, typename T>
