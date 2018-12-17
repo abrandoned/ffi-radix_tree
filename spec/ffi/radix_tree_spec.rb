@@ -22,12 +22,24 @@ describe ::FFI::RadixTree do
       ::FFI::RadixTree.must_respond_to("insert")
     end
 
+    it "responds to #update" do
+      ::FFI::RadixTree.must_respond_to("update")
+    end
+
     it "responds to #longest_prefix" do
       ::FFI::RadixTree.must_respond_to("longest_prefix")
     end
 
     it "responds to #longest_prefix_value" do
       ::FFI::RadixTree.must_respond_to("longest_prefix_value")
+    end
+
+    it "responds to #greedy_match" do
+      ::FFI::RadixTree.must_respond_to("greedy_match")
+    end
+
+    it "responds to #greedy_substring_match" do
+      ::FFI::RadixTree.must_respond_to("greedy_substring_match")
     end
 
     it "responds to #match_free" do

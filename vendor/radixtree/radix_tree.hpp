@@ -67,10 +67,12 @@ public:
     iterator end();
 
     std::pair<iterator, bool> insert(const value_type &val);
+    bool update(const value_type &val);
     bool erase(const K &key);
     void erase(iterator it);
     void prefix_match(const K &key, std::vector<iterator> &vec);
     void greedy_match(const K &key,  std::vector<iterator> &vec);
+    void greedy_substring_match(const K &key, std::vector<iterator> &vec);
     iterator longest_match(const K &key);
 
     T& operator[] (const K &lhs);
@@ -81,9 +83,11 @@ private:
 
     radix_tree_node<K, T>* begin(radix_tree_node<K, T> *node);
     radix_tree_node<K, T>* find_node(const K &key, radix_tree_node<K, T> *node, int depth);
+    std::vector<radix_tree_node<K, T>*> find_leaf_nodes_with_substr(const K &key, radix_tree_node<K, T> *node, const K &ancestor_key);
     radix_tree_node<K, T>* append(radix_tree_node<K, T> *parent, const value_type &val);
     radix_tree_node<K, T>* prepend(radix_tree_node<K, T> *node, const value_type &val);
     void greedy_match(radix_tree_node<K, T> *node, std::vector<iterator> &vec);
+    void greedy_substring_match(radix_tree_node<K, T> *node, std::vector<iterator> &vec);
 
     radix_tree(const radix_tree& other); // delete
     radix_tree& operator =(const radix_tree other); // delete
@@ -229,6 +233,23 @@ void radix_tree<K, T>::greedy_match(radix_tree_node<K, T> *node, std::vector<ite
 
     for (it = node->m_children.begin(); it != node->m_children.end(); ++it) {
         greedy_match(it->second, vec);
+    }
+}
+
+template <typename K, typename T>
+void radix_tree<K, T>::greedy_substring_match(const K &key, std::vector<iterator> &vec)
+{
+    std::vector<radix_tree_node<K, T>*> nodes;
+
+    vec.clear();
+
+    if (m_root == NULL)
+        return;
+
+    nodes = find_leaf_nodes_with_substr(key, m_root, "");
+
+    for (auto& node : nodes) {
+        vec.push_back(node);
     }
 }
 
@@ -449,6 +470,22 @@ std::pair<typename radix_tree<K, T>::iterator, bool> radix_tree<K, T>::insert(co
 }
 
 template <typename K, typename T>
+bool radix_tree<K, T>::update(const value_type &val)
+{
+    if (m_root == NULL)
+        return false;
+
+    radix_tree_node<K, T> *node = find_node(val.first, m_root, 0);
+
+    // if the node is a internal node, return false
+    if (! node->m_is_leaf)
+        return false;
+
+    node->m_value = new value_type(val);
+    return true;
+}
+
+template <typename K, typename T>
 typename radix_tree<K, T>::iterator radix_tree<K, T>::find(const K &key)
 {
     if (m_root == NULL)
@@ -493,6 +530,30 @@ radix_tree_node<K, T>* radix_tree<K, T>::find_node(const K &key, radix_tree_node
     }
 
     return node;
+}
+
+template <typename K, typename T>
+std::vector<radix_tree_node<K, T>*> radix_tree<K, T>::find_leaf_nodes_with_substr(const K &key, radix_tree_node<K, T> *node, const K &ancestor_key)
+{
+    std::vector<radix_tree_node<K, T>*> nodes;
+
+    if (node->m_children.empty())
+        return nodes;
+
+    typename radix_tree_node<K, T>::it_child it;
+    for (it = node->m_children.begin(); it != node->m_children.end(); ++it) {
+        if (it->second->m_is_leaf) {
+            nodes.push_back(it->second);
+        } else {
+            auto child_key = ancestor_key + it->first;
+            if (key.find(child_key) != std::string::npos ) {
+                auto found_nodes = find_leaf_nodes_with_substr(key, it->second, child_key);
+                nodes.insert(nodes.end(), found_nodes.begin(), found_nodes.end());
+            }
+        }
+    }
+
+    return nodes;
 }
 
 /*

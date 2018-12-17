@@ -77,10 +77,14 @@ module FFI
     attach_function :erase, [:pointer, :string], :void
     attach_function :fetch, [:pointer, :string, :pointer], :pointer
     attach_function :insert, [:pointer, :string, :pointer, :size_t], :void
+    attach_function :update, [:pointer, :string, :pointer, :size_t], :bool
     attach_function :longest_prefix, [:pointer, :string], :string
     attach_function :longest_prefix_and_value, [:pointer, :string, :pointer, :pointer], :pointer
     attach_function :longest_prefix_value, [:pointer, :string, :pointer], :pointer
+    attach_function :greedy_match, [:pointer, :string, :pointer, :pointer], :int
+    attach_function :greedy_substring_match, [:pointer, :string, :pointer, :pointer], :int
     attach_function :match_free, [:pointer], :void
+    attach_function :multi_match_free, [:pointer, :int], :void
     attach_function :has_key, [:pointer, :string], :bool
 
     class Tree
@@ -114,6 +118,21 @@ module FFI
         end
 
         push_response
+      end
+
+      def push_or_update(key, value)
+        response = nil
+        @first_character_present[key[0]] = true
+        storage_data = ::MessagePack.pack(value)
+        bytesize = storage_data.bytesize
+
+        ::FFI::MemoryPointer.new(:char, bytesize, true) do |memory_buffer|
+          memory_buffer.put_bytes(0, storage_data)
+          response = ::FFI::RadixTree.update(@ptr, key, memory_buffer, bytesize)
+          response ||= ::FFI::RadixTree.insert(@ptr, key, memory_buffer, bytesize)
+        end
+
+        response
       end
 
       def get(key)
@@ -180,6 +199,61 @@ module FFI
         get_response
       ensure
         ::FFI::RadixTree.match_free(byte_pointer) if byte_pointer
+      end
+
+      def greedy_match(string)
+        return [] unless @first_character_present[string[0]]
+        array_pointer = nil
+        match_sizes_pointer = nil
+        array_size = 0
+        get_response = []
+
+        ::FFI::MemoryPointer.new(:pointer) do |match_array|
+          ::FFI::MemoryPointer.new(:pointer) do |match_sizes_array|
+            array_size = ::FFI::RadixTree.greedy_match(@ptr, string, match_array, match_sizes_array)
+            if array_size > 0
+              array_sizes_pointer = match_sizes_array.read_pointer
+              match_sizes = array_sizes_pointer.get_array_of_int(0, array_size)
+              array_pointer = match_array.read_pointer
+              char_arrays = array_pointer.get_array_of_pointer(0, array_size)
+              char_arrays.each_with_index do |ptr, index|
+                get_response << ::MessagePack.unpack(ptr.get_bytes(0, match_sizes[index]))
+              end
+            end
+          end
+        end
+
+        get_response
+      ensure
+        ::FFI::RadixTree.multi_match_free(array_pointer, array_size) if array_pointer
+        ::FFI::RadixTree.match_free(match_sizes_pointer) if match_sizes_pointer
+      end
+
+      def greedy_substring_match(string)
+        array_pointer = nil
+        match_sizes_pointer = nil
+        array_size = 0
+        get_response = []
+
+        ::FFI::MemoryPointer.new(:pointer) do |match_array|
+          ::FFI::MemoryPointer.new(:pointer) do |match_sizes_array|
+            array_size = ::FFI::RadixTree.greedy_substring_match(@ptr, string, match_array, match_sizes_array)
+            if array_size > 0
+              array_sizes_pointer = match_sizes_array.read_pointer
+              match_sizes = array_sizes_pointer.get_array_of_int(0, array_size)
+              array_pointer = match_array.read_pointer
+              char_arrays = array_pointer.get_array_of_pointer(0, array_size)
+              char_arrays.each_with_index do |ptr, index|
+                get_response << ::MessagePack.unpack(ptr.get_bytes(0, match_sizes[index]))
+              end
+            end
+          end
+        end
+
+        get_response
+      ensure
+        ::FFI::RadixTree.multi_match_free(array_pointer, array_size) if array_pointer
+        ::FFI::RadixTree.match_free(match_sizes_pointer) if match_sizes_pointer
       end
     end
   end
