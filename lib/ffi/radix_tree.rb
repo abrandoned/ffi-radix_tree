@@ -120,6 +120,21 @@ module FFI
         push_response
       end
 
+      def push_or_update(key, value)
+        response = nil
+        @first_character_present[key[0]] = true
+        storage_data = ::MessagePack.pack(value)
+        bytesize = storage_data.bytesize
+
+        ::FFI::MemoryPointer.new(:char, bytesize, true) do |memory_buffer|
+          memory_buffer.put_bytes(0, storage_data)
+          response = ::FFI::RadixTree.update(@ptr, key, memory_buffer, bytesize)
+          response ||= ::FFI::RadixTree.insert(@ptr, key, memory_buffer, bytesize)
+        end
+
+        response
+      end
+
       def get(key)
         return nil unless @first_character_present[key[0]]
         byte_pointer = get_response = nil
@@ -137,20 +152,6 @@ module FFI
         get_response
       ensure
         ::FFI::RadixTree.match_free(byte_pointer) if byte_pointer
-      end
-
-      def set(key, value)
-        push_response = nil
-        @first_character_present[key[0]] = true
-        storage_data = ::MessagePack.pack(value)
-        bytesize = storage_data.bytesize
-
-        ::FFI::MemoryPointer.new(:char, bytesize, true) do |memory_buffer|
-          memory_buffer.put_bytes(0, storage_data)
-          push_response = ::FFI::RadixTree.update(@ptr, key, memory_buffer, bytesize)
-        end
-
-        push_response
       end
 
       def longest_prefix(string)

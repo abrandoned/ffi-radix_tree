@@ -18,21 +18,22 @@ describe ::FFI::RadixTree::Tree do
       subject.get("hello").must_equal "world"
     end
 
+    it "#push_or_update" do
+      subject.must_respond_to("push_or_update")
+      subject.method(:push_or_update).arity.must_equal 2
+      subject.push("hello", "world")
+      subject.push_or_update("hello", "updated")
+      subject.get("hello").must_equal "updated"
+      subject.push_or_update("new_key", "new_value")
+      subject.get("new_key").must_equal "new_value"
+    end
+
     it "#get" do
       subject.must_respond_to("get")
       subject.method(:get).arity.must_equal 1
       subject.get("Derp Derpy").must_be_nil
       subject.push("get", "test")
       subject.get("get").must_equal "test"
-    end
-
-    it "#set" do
-      subject.must_respond_to("set")
-      subject.method(:set).arity.must_equal 2
-      subject.push("hello", "world")
-      subject.set("hello", "updated")
-      subject.get("hello").must_equal "updated"
-      subject.set("no_match", "fail").must_equal false
     end
 
     it "#longest_prefix" do
