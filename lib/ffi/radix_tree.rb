@@ -135,6 +135,10 @@ module FFI
         response
       end
 
+      def erase(key)
+        ::FFI::RadixTree.erase(@ptr, key)
+      end
+
       def get(key)
         return nil unless @first_character_present[key[0]]
         byte_pointer = get_response = nil
