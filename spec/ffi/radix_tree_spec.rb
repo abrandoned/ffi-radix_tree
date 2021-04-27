@@ -6,10 +6,6 @@ describe ::FFI::RadixTree do
       ::FFI::RadixTree.must_respond_to("create")
     end
 
-    it "responds to #destroy" do
-      ::FFI::RadixTree.must_respond_to("destroy")
-    end
-
     it "responds to #erase" do
       ::FFI::RadixTree.must_respond_to("erase")
     end
