@@ -88,18 +88,9 @@ module FFI
     attach_function :has_key, [:pointer, :string], :bool
 
     class Tree
-      def self.destroy!(tree)
-        tree.destroy! unless tree.nil?
-      end
-
       def initialize
-        @ptr = ::FFI::RadixTree.create
+        @ptr = ::FFI::AutoPointer.new(::FFI::RadixTree.create, ::FFI::RadixTree.method(:destroy))
         @first_character_present = {}
-      end
-
-      def destroy!
-        ::FFI::RadixTree.destroy(@ptr) unless @ptr.nil?
-        @ptr = nil
       end
 
       def has_key?(key)

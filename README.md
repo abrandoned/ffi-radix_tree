@@ -56,9 +56,6 @@ rtree.greedy_match("managerial")                  # returns ["noun", "plural nou
 
 # Find all values whose keys are included _anywhere_ in the search term
 rtree.greedy_substring_match("I managed to jump") # returns ["base verb", "past tense"]
-
-# cleanup
-rtree.destroy!
 ```
 
 ## Development
