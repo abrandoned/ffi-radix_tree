@@ -84,6 +84,7 @@ module FFI
     attach_function :greedy_match, [:pointer, :string, :pointer, :pointer], :int
     attach_function :greedy_substring_match, [:pointer, :string, :pointer, :pointer], :int
     attach_function :match_free, [:pointer], :void
+    attach_function :match_sizes_free, [:pointer], :void
     attach_function :multi_match_free, [:pointer, :int], :void
     attach_function :has_key, [:pointer, :string], :bool
 
@@ -96,6 +97,8 @@ module FFI
       def has_key?(key)
         ::FFI::RadixTree.has_key(@ptr, key)
       end
+
+      alias_method :key?, :has_key?
 
       def push(key, value)
         push_response = nil
@@ -207,8 +210,8 @@ module FFI
           ::FFI::MemoryPointer.new(:pointer) do |match_sizes_array|
             array_size = ::FFI::RadixTree.greedy_match(@ptr, string, match_array, match_sizes_array)
             if array_size > 0
-              array_sizes_pointer = match_sizes_array.read_pointer
-              match_sizes = array_sizes_pointer.get_array_of_int(0, array_size)
+              match_sizes_pointer = match_sizes_array.read_pointer
+              match_sizes = match_sizes_pointer.get_array_of_int(0, array_size)
               array_pointer = match_array.read_pointer
               char_arrays = array_pointer.get_array_of_pointer(0, array_size)
               char_arrays.each_with_index do |ptr, index|
@@ -221,7 +224,7 @@ module FFI
         get_response
       ensure
         ::FFI::RadixTree.multi_match_free(array_pointer, array_size) if array_pointer
-        ::FFI::RadixTree.match_free(match_sizes_pointer) if match_sizes_pointer
+        ::FFI::RadixTree.match_sizes_free(match_sizes_pointer) if match_sizes_pointer
       end
 
       def greedy_substring_match(string)
@@ -234,8 +237,8 @@ module FFI
           ::FFI::MemoryPointer.new(:pointer) do |match_sizes_array|
             array_size = ::FFI::RadixTree.greedy_substring_match(@ptr, string, match_array, match_sizes_array)
             if array_size > 0
-              array_sizes_pointer = match_sizes_array.read_pointer
-              match_sizes = array_sizes_pointer.get_array_of_int(0, array_size)
+              match_sizes_pointer = match_sizes_array.read_pointer
+              match_sizes = match_sizes_pointer.get_array_of_int(0, array_size)
               array_pointer = match_array.read_pointer
               char_arrays = array_pointer.get_array_of_pointer(0, array_size)
               char_arrays.each_with_index do |ptr, index|
@@ -248,7 +251,7 @@ module FFI
         get_response
       ensure
         ::FFI::RadixTree.multi_match_free(array_pointer, array_size) if array_pointer
-        ::FFI::RadixTree.match_free(match_sizes_pointer) if match_sizes_pointer
+        ::FFI::RadixTree.match_sizes_free(match_sizes_pointer) if match_sizes_pointer
       end
     end
   end
