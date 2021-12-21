@@ -32,20 +32,19 @@ bool has_key(radix_tree<std::string, std::vector<char>>* map_pointer, const char
 }
 
 void match_free(const char* match) {
-  if (match != NULL) {
-    delete[] match;
-    match = NULL;
-  }
+  delete[] match;
+}
+
+void match_sizes_free(const int* match_sizes) {
+  delete[] match_sizes;
 }
 
 void multi_match_free(const char** match, int length) {
   if (match != NULL) {
     for (int i=0; i<length; ++i) {
       delete[] match[i];
-      match[i] = NULL;
     }
     delete[] match;
-    match = NULL;
   }
 }
 
@@ -110,12 +109,12 @@ const char* longest_prefix_value(radix_tree<std::string, std::vector<char>>* map
   return NULL;
 }
 
-unsigned char* fetch(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, int* read_size) {
+char* fetch(radix_tree<std::string, std::vector<char>>* map_pointer, const char* key, int* read_size) {
   auto iter = map_pointer->find(std::string(key));
   long counter = 0;
 
   if (iter != map_pointer->end()) {
-    unsigned char *return_val  = new unsigned char[iter->second.size()]{0};
+    char *return_val  = new char[iter->second.size()]{0};
     for( auto& val : iter->second ) {
       return_val[counter] = val;
       counter++;
